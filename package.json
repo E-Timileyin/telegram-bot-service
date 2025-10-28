@@ -1,0 +1,23 @@
+{
+  "name": "ststic-telegram-bot",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "ts-node src/index.ts",
+    "dev": "nodemon src/index.ts"
+  },
+  "keywords": ["telegram", "bot", "ststic"],
+  "author": "Eyiowuawi Timileyin",
+  "license": "MIT",
+  "description": "Telegram bot for statistics",
+  "dependencies": {
+    "cloudinary": "^2.8.0",
+    "dotenv": "^17.2.3",
+    "nodemon": "^3.1.10",
+    "telegraf": "^4.16.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "type": "module"
+}
