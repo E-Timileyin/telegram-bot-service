@@ -37,6 +37,11 @@ Click the buttons below to get started:`;
     // Show latest media if available
     const latestMedia = await ServiceMedia.findOne({ eventType: "CurrentSunday" }).sort({ date: -1 });
     if (latestMedia) {
+      // Display sermon notes if available
+      if (latestMedia.sermonNotes) {
+        await ctx.reply(`*Latest Sermon Notes - ${latestMedia.date}*\n\n${latestMedia.sermonNotes}`, { parse_mode: 'Markdown' });
+      }
+      
       await ctx.reply("Here are the latest Sunday images:");
       const mediaGroup = latestMedia.mediaUrls.map(url => ({ type: "photo" as const, media: url }));
       ctx.replyWithMediaGroup(mediaGroup);

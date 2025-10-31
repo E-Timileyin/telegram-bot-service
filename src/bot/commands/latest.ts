@@ -9,6 +9,11 @@ export const latestCommand = (bot: Telegraf) => {
         .exec();
 
       if (latestMedia && latestMedia.mediaUrls.length > 0) {
+        // Display sermon notes if available
+        if (latestMedia.sermonNotes) {
+          await ctx.reply(`📝 *Sermon Notes - ${latestMedia.date}*\n\n${latestMedia.sermonNotes}`, { parse_mode: 'Markdown' });
+        }
+        
         const mediaGroup = latestMedia.mediaUrls.map(url => ({ type: "photo" as const, media: url }));
         await ctx.replyWithMediaGroup(mediaGroup);
       } else {

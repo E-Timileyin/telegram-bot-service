@@ -43,7 +43,12 @@ export const archiveCommand = (bot: Telegraf) => {
         return ctx.reply(`No images found for ${date}.`);
       }
 
-      await ctx.reply(`Images from ${date}:`);
+      // Display sermon notes if available
+      if (media.sermonNotes) {
+        await ctx.reply(`📝 *Sermon Notes - ${date}*\n\n${media.sermonNotes}`, { parse_mode: 'Markdown' });
+      }
+      
+      await ctx.reply(`📸 Images from ${date}:`);
       const mediaGroup = media.mediaUrls.map(url => ({
         type: "photo" as const,
         media: url

@@ -7,6 +7,7 @@ export interface IServiceMedia extends Document {
   mediaUrls: string[];                 
   mediaType: "photo" | "video" | "audio";
   captions?: string;
+  sermonNotes?: string;                
   category?: Types.ObjectId;           
   createdAt?: Date;
   updatedAt?: Date;
@@ -20,6 +21,7 @@ const ServiceMediaSchema = new Schema<IServiceMedia>(
     mediaUrls: [{ type: String, required: true }],
     mediaType: { type: String, enum: ["photo", "video", "audio"], default: "photo" },
     captions: { type: String },
+    sermonNotes: { type: String },
     category: { type: Schema.Types.ObjectId, ref: "Category" },
   },
   { timestamps: true }
