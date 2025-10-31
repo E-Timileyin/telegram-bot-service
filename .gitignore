@@ -29,3 +29,7 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+
+
+# Markdown files
+features.md
