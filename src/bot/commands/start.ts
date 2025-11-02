@@ -15,6 +15,7 @@ Commands you can use:
 
 /latest - View the most recent Sunday images
 /upload - (Admin only) Upload new media
+/sermon - (Admin only) Take sermon notes
 /history - Access images from a specific Sunday
 
 Our goal is to ensure all members can easily access church service media anytime, keeping the community connected and informed.
@@ -25,26 +26,22 @@ Click the buttons below to get started:`;
       reply_markup: {
         inline_keyboard: [
           [
-            { text: 'Current Media', callback_data: 'latest' }
-          ],
-          [
-            { text: 'View Past Media', callback_data: 'archive' }
+            { text: 'Current Media', callback_data: 'latest' },
+            { text: 'Sermon Notes', callback_data: 'sermon' },
+            { text: 'View Past Media', callback_data: 'archive' },
+            { text: 'Help', callback_data: 'help' }
           ]
         ]
       }
     });
     
-    // Show latest media if available
+    // Inform user they can view latest media
     const latestMedia = await ServiceMedia.findOne({ eventType: "CurrentSunday" }).sort({ date: -1 });
     if (latestMedia) {
-      // Display sermon notes if available
-      if (latestMedia.sermonNotes) {
-        await ctx.reply(`*Latest Sermon Notes - ${latestMedia.date}*\n\n${latestMedia.sermonNotes}`, { parse_mode: 'Markdown' });
-      }
-      
-      await ctx.reply("Here are the latest Sunday images:");
-      const mediaGroup = latestMedia.mediaUrls.map(url => ({ type: "photo" as const, media: url }));
-      ctx.replyWithMediaGroup(mediaGroup);
+      // Only show a message about available media
+      await ctx.reply("You can view the latest Sunday media by using the /latest command.");
+    } else {
+      await ctx.reply("No Sunday media is currently available. Check back later!");
     }
   });
 };
