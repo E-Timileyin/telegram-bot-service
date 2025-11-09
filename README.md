@@ -1,4 +1,4 @@
-# STSTIC Telegram Bot
+# Telegram Bot
 
 A Telegram bot for managing and delivering statistical data, sermons, and media content. Built with TypeScript, Telegraf, and MongoDB.
 
