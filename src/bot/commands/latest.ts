@@ -3,7 +3,8 @@ import ServiceMedia from "../../models/ServiceMedia.Model.js";
 
 const MEDIA_TYPES = {
   IMAGE: 'image',
-  SERMON: 'sermon'
+  SERMON: 'sermon',
+  SERMON_DATE: 'sermon_date_'
 } as const;
 
 export const latestCommand = (bot: Telegraf) => {
@@ -22,37 +23,100 @@ export const latestCommand = (bot: Telegraf) => {
     }
   });
 
+  // Handle sermon date selection
+  bot.action(/^sermon_date_(\d{4}-\d{2}-\d{2})$/, async (ctx: any) => {
+    try {
+      const date = ctx.match[1];
+      await ctx.answerCbQuery();
+      
+      const sermon = await ServiceMedia.findOne({
+        eventType: "CurrentSunday",
+        date: date,
+        $or: [
+          { 
+            mediaType: { $in: ["sermon", "text"] },
+            $or: [
+              { sermonNotes: { $exists: true, $ne: "" } },
+              { description: { $exists: true, $ne: "" } }
+            ]
+          }
+        ]
+      });
+
+      if (!sermon) {
+        return await ctx.reply(`No sermon notes found for ${date}.`);
+      }
+
+      await ctx.reply(
+        `📝 *Sermon Notes - ${sermon.date}*\n\n${sermon.sermonNotes}`,
+        { parse_mode: 'Markdown' }
+      );
+    } catch (err) {
+      console.error("Error fetching sermon by date:", err);
+      await ctx.reply("An error occurred while fetching the sermon. Please try again later.");
+    }
+  });
+
   // Handle callback queries for the latest options
-  bot.action(new RegExp(`^latest_(${Object.values(MEDIA_TYPES).join('|')})$`), async (ctx: any) => {
+  bot.action(new RegExp(`^latest_(${Object.values(MEDIA_TYPES).filter(t => t !== 'sermon_date_').join('|')})$`), async (ctx: any) => {
     try {
       const mediaType = ctx.match[1];
       await ctx.answerCbQuery();
       
-      const latestMedia = await ServiceMedia.findOne({ eventType: "CurrentSunday" })
-        .sort({ date: -1 })
-        .exec();
+      if (mediaType === MEDIA_TYPES.SERMON) {
+        // Get available sermon dates for selection
+        const sermonDates = await ServiceMedia.find({
+          eventType: "CurrentSunday",
+          $or: [
+            { 
+              mediaType: { $in: ["sermon", "text"] },
+              $or: [
+                { sermonNotes: { $exists: true, $ne: "" } },
+                { description: { $exists: true, $ne: "" } }
+              ]
+            }
+          ]
+        })
+          .sort({ date: -1 })
+          .limit(10) // Limit to 10 most recent sermons
+          .select('date')
+          .exec();
 
-      if (!latestMedia || latestMedia.mediaUrls.length === 0) {
-        await ctx.reply("No media found for the latest Sunday.");
-        return;
-      }
+        if (sermonDates.length === 0) {
+          return await ctx.reply("No sermon notes available.");
+        }
 
-      if (mediaType === MEDIA_TYPES.IMAGE) {
-        // Send all media files as a group
-        const mediaGroup = latestMedia.mediaUrls.map(url => ({ 
-          type: "photo" as const, 
-          media: url 
-        }));
-        await ctx.replyWithMediaGroup(mediaGroup);
-      } else if (mediaType === MEDIA_TYPES.SERMON && latestMedia.sermonNotes) {
-        // Send sermon notes if available
-        await ctx.reply(
-          `📝 *Sermon Notes - ${latestMedia.date}*\n\n${latestMedia.sermonNotes}`, 
-          { parse_mode: 'Markdown' }
+        // Create buttons for each date
+        const buttons = sermonDates.map(sermon => [
+          Markup.button.callback(
+            `📅 ${sermon.date}`,
+            `${MEDIA_TYPES.SERMON_DATE}${sermon.date}`
+          )
+        ]);
+
+        return await ctx.reply(
+          '📖 Select a date to view sermon notes:',
+          Markup.inlineKeyboard(buttons)
         );
-      } else {
-        await ctx.reply("No sermon notes available for the latest Sunday.");
       }
+
+      // For images, find the latest media with images
+      const latestMedia = await ServiceMedia.findOne({
+        eventType: "CurrentSunday",
+        mediaType: { $in: ["photo", "image"] },
+        mediaUrls: { $exists: true, $not: { $size: 0 } }
+      }).sort({ date: -1 }).exec();
+
+      if (!latestMedia || !latestMedia.mediaUrls?.length) {
+        return await ctx.reply("No media found for the latest Sunday.");
+      }
+
+      // Handle image media
+      const mediaGroup = latestMedia.mediaUrls.map(url => ({
+        type: "photo" as const,
+        media: url
+      }));
+      await ctx.replyWithMediaGroup(mediaGroup);
     } catch (err) {
       console.error("Error handling latest media request:", err);
       await ctx.reply("An error occurred while fetching the media. Please try again later.");

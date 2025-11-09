@@ -25,10 +25,9 @@ export const sermonCommand = (bot: Telegraf) => {
         sermonDrafts.set(telegramId, "");
         return ctx.reply(
           "📝 You're creating a **new sermon note**.\n\n" +
-          "• Type your sermon text below.\n" +
-          "• You can add multiple messages; they will be combined.\n" +
-          "• When finished, type /sermon_done to save.\n\n" +
-          "To cancel, type /cancel"
+          "• Type your sermon text and press send to save it immediately.\n" +
+          "• To cancel, type /cancel\n\n" +
+          "_Enter your sermon note now..._"
         );
       }
 
@@ -55,59 +54,51 @@ export const sermonCommand = (bot: Telegraf) => {
     }
   });
 
-  // Collect text messages for sermon note
+  // Handle text input for sermon notes
   bot.on("text", async (ctx: Context) => {
     const telegramId = ctx.from?.id?.toString();
-    if (!telegramId || !sermonDrafts.has(telegramId)) return;
+    if (!telegramId) return;
 
     const text = (ctx.message as any).text;
-    if (text === "/sermon_done") return;
+    
+    // Skip if it's a command
+    if (text.startsWith('/')) return;
 
-    const currentText = sermonDrafts.get(telegramId)!;
-    sermonDrafts.set(telegramId, currentText + (currentText ? "\n\n" : "") + text);
+    // Check if user is in sermon creation mode
+    if (sermonDrafts.has(telegramId)) {
+      const user = await User.findOne({ telegramId });
+      if (!user || user.role !== 'admin') {
+        sermonDrafts.delete(telegramId);
+        return ctx.reply("You don't have permission to save sermon notes.");
+      }
 
-    await ctx.reply(
-      "📝 Text added to sermon note. Continue typing, or type /sermon_done to save."
-    );
-  });
+      const sermonText = text.trim();
+      if (!sermonText) {
+        return ctx.reply("Please enter a valid sermon note.");
+      }
 
-  // Finish and save sermon note
-  bot.command("sermon_done", async (ctx: Context) => {
-    const telegramId = ctx.from?.id?.toString();
-    if (!telegramId || !sermonDrafts.has(telegramId)) {
-      return ctx.reply("No active sermon note. Start one with /sermon.");
-    }
+      try {
+        const sermon = new ServiceMedia({
+          uploader: user._id,
+          mediaType: "text",
+          sermonNotes: sermonText,
+          mediaUrls: [],
+          eventType: "CurrentSunday",
+          date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+          captions: sermonText.substring(0, 200) + (sermonText.length > 200 ? '...' : '')
+        });
 
-    const user = await User.findOne({ telegramId });
-    if (!user || user.role !== 'admin') {
-      sermonDrafts.delete(telegramId);
-      return ctx.reply("You don't have permission to save sermon notes.");
-    }
+        await sermon.save();
+        sermonDrafts.delete(telegramId);
 
-    const sermonText = sermonDrafts.get(telegramId)!;
-
-    try {
-      const sermon = new ServiceMedia({
-        uploader: user._id,
-        mediaType: "sermon",
-        description: sermonText || "No text provided",
-        mediaUrls: [],
-        eventType: "sermon",
-        date: new Date().toISOString().split("T")[0],
-      });
-
-      await sermon.save();
-      sermonDrafts.delete(telegramId);
-
-      await ctx.reply(
-        `✅ Text-based sermon note saved successfully!\n\n📝 Preview:\n${sermonText.substring(
-          0,
-          500
-        )}${sermonText.length > 500 ? "..." : ""}`
-      );
-    } catch (err) {
-      console.error("❌ Error saving sermon:", err);
-      await ctx.reply("Failed to save sermon. Try again.");
+        await ctx.reply(
+          `✅ Sermon note saved successfully!\n\n📝 Preview:\n${sermonText.substring(0, 500)}${sermonText.length > 500 ? '...' : ''}`,
+          { parse_mode: 'Markdown' }
+        );
+      } catch (err) {
+        console.error("❌ Error saving sermon:", err);
+        await ctx.reply("Failed to save sermon. Please try again.");
+      }
     }
   });
 };

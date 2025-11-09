@@ -3,27 +3,19 @@ import { config } from '../config/env.js';
 import { startCommand } from './commands/start.js';
 import { latestCommand } from './commands/latest.js';
 import { uploadCommand } from './commands/upload.js';
-import { makeAdminCommand } from './commands/makeadmin.js';
 import { archiveCommand } from './commands/archive.js';
-import { helpCommand } from './commands/help.js';
 import { sermonCommand } from './commands/addsermon.js';
-import { ensureAdminUser } from '../utils/ensureAdmin.js';
 import ServiceMedia from '../models/ServiceMedia.Model.js';
 
 export const bot = new Telegraf(config.botToken);
 
 export const initBot = async (): Promise<void> => {
   try {
-    // Ensure admin user exists
-    await ensureAdminUser();
-    
     // Register commands
     startCommand(bot);
     latestCommand(bot);
     uploadCommand(bot);
-    makeAdminCommand(bot);
     archiveCommand(bot);
-    helpCommand(bot);
     sermonCommand(bot);
 
     // Set up bot commands menu

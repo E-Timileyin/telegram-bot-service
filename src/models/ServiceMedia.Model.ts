@@ -9,6 +9,10 @@ export interface IServiceMedia extends Document {
   captions?: string;
   sermonNotes?: string;                
   category?: Types.ObjectId;           
+  title?: string;                     // Sermon title
+  content?: string;                   // Main sermon content
+  bibleReferences?: string[];         // Array of scripture references
+  isPublished?: boolean;              // Publication status
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -27,6 +31,10 @@ const ServiceMediaSchema = new Schema<IServiceMedia>(
     mediaType: { type: String, enum: ["photo", "video", "audio", "text"], default: "photo" },
     captions: { type: String },
     sermonNotes: { type: String },
+    title: { type: String },
+    content: { type: String },
+    bibleReferences: [{ type: String }],
+    isPublished: { type: Boolean, default: false },
     category: { type: Schema.Types.ObjectId, ref: "Category" },
   },
   { timestamps: true }
