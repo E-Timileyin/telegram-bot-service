@@ -1,14 +1,14 @@
 import { Telegraf, Context, Markup } from "telegraf";
 import mongoose from 'mongoose';
 import User from "../../models/User.Model.js";
-import Sermon from "../../models/Sermon.js";
+import ServiceMedia from "../../models/ServiceMedia.Model.js";
 
 // Temporary storage for active sermon drafts and their message IDs
 const sermonDrafts = new Map<string, { text: string; messageId?: number }>();
 
-export const sermonCommand = (bot: Telegraf) => {
+export const addSermonCommand = (bot: Telegraf) => {
   // === Start a new sermon note ===
-  bot.command("sermon", async (ctx: Context) => {
+  bot.command("addsermon", async (ctx: Context) => {
     try {
       const telegramId = ctx.from?.id?.toString();
       if (!telegramId) return ctx.reply("Cannot identify user.");
@@ -200,7 +200,7 @@ export const sermonCommand = (bot: Telegraf) => {
       });
 
       // Create and save sermon with transaction
-      const sermon = new Sermon(sermonData);
+      const sermon = new ServiceMedia(sermonData);
       const savedSermon = await sermon.save({ session });
       
       await session.commitTransaction();
@@ -222,11 +222,15 @@ export const sermonCommand = (bot: Telegraf) => {
         );
       }
 
-      const preview = sermon.content.substring(0, 300) + (sermon.content.length > 300 ? '...' : '');
+      const sermonTitle = sermon.title || 'Untitled Sermon';
+      const sermonContent = sermon.content || '';
+      const sermonDate = sermon.date || new Date().toISOString().split('T')[0];
+      
+      const preview = sermonContent.substring(0, 300) + (sermonContent.length > 300 ? '...' : '');
       const successMessage = `🎉 *Sermon Saved Successfully!*\n\n` +
-        `📖 *${sermon.title}*\n\n` +
+        `📖 *${sermonTitle}*\n\n` +
         `📝 *Preview:*\n${preview}\n\n` +
-        `📅 ${sermon.date}\n` +
+        `📅 ${sermonDate}\n` +
         `👤 Uploaded by: ${user.username || 'Admin'}\n\n` +
         `_This sermon has been saved and published._`;
 

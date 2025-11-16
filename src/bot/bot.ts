@@ -4,7 +4,7 @@ import { startCommand } from './commands/start.js';
 import { latestCommand } from './commands/latest.js';
 import { uploadCommand } from './commands/upload.js';
 import { archiveCommand } from './commands/archive.js';
-import { sermonCommand } from './commands/addsermon.js';
+import { addSermonCommand } from './commands/addsermon.js';
 import ServiceMedia from '../models/ServiceMedia.Model.js';
 
 export const bot = new Telegraf(config.botToken);
@@ -16,7 +16,7 @@ export const initBot = async (): Promise<void> => {
     latestCommand(bot);
     uploadCommand(bot);
     archiveCommand(bot);
-    sermonCommand(bot);
+    addSermonCommand(bot);
 
     // Set up bot commands menu
     await bot.telegram.setMyCommands([

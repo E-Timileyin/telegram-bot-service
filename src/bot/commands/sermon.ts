@@ -3,7 +3,7 @@ import User from "../../models/User.Model.js";
 import ServiceMedia from "../../models/ServiceMedia.Model.js";
 
 // Temporary in-memory storage for active sermon drafts
-const sermonDrafts = new Map<string, string>();
+const Sermon = new Map<string, string>();
 
 export const sermonCommand = (bot: Telegraf) => {
   // View or create sermon notes
