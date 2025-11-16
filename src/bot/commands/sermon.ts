@@ -5,6 +5,9 @@ import ServiceMedia from "../../models/ServiceMedia.Model.js";
 // Temporary in-memory storage for active sermon drafts
 const Sermon = new Map<string, string>();
 
+// Temporary storage for active sermon drafts and their message IDs
+const sermonDrafts = new Map<string, { text: string; messageId?: number }>();
+
 export const sermonCommand = (bot: Telegraf) => {
   // View or create sermon notes
   bot.command("sermon", async (ctx: Context) => {
@@ -22,7 +25,7 @@ export const sermonCommand = (bot: Telegraf) => {
           return ctx.reply("❌ Only admins can create new sermon notes.");
         }
         
-        sermonDrafts.set(telegramId, "");
+        sermonDrafts.set(telegramId, { text: "" });
         return ctx.reply(
           "📝 You're creating a **new sermon note**.\n\n" +
           "• Type your sermon text and press send to save it immediately.\n" +
