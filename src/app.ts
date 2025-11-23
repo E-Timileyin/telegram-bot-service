@@ -22,6 +22,17 @@ app.get('/api/health', (req, res) => {
     res.json(status);
 });
 
+// Cron job endpoint
+app.get('/api/cron', (req, res) => {
+    const timestamp = new Date().toISOString();
+    console.log(`Cron job executed at ${timestamp}`);
+    res.json({
+        status: 'success',
+        message: 'Cron job executed successfully',
+        timestamp
+    });
+});
+
 // Keep-alive server for Render
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {
